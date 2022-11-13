@@ -1,4 +1,12 @@
 #define GRID_SIZE 4
+#define SD_ChipSelectPin 2
+
+#include <SdFat.h>
+SdFat sd;
+
+#include <TMRpcm.h>
+#include <SPI.h>
+TMRpcm audio;
 
 enum keys {
   KEY_1 , KEY_2 , KEY_3 , KEY_4 ,
@@ -14,6 +22,33 @@ enum leds {
   LED_9 , LED_10, LED_11, LED_12,
   LED_13, LED_14, LED_15, LED_16,
   LED_NONE
+};
+
+enum sounds {
+  SOUND_1 , SOUND_2 , SOUND_3 , SOUND_4 ,
+  SOUND_5 , SOUND_6 , SOUND_7 , SOUND_8 ,
+  SOUND_9 , SOUND_10, SOUND_11, SOUND_12,
+  SOUND_13, SOUND_14, SOUND_15, SOUND_16,
+  SOUND_COUNT
+};
+
+static const char *sound_files[SOUND_COUNT] = {
+  "pluck midi 45.wav",
+  "pluck midi 47.wav",
+  "pluck midi 48.wav",
+  "pluck midi 50.wav",
+  "pluck midi 52.wav",
+  "pluck midi 53.wav",
+  "pluck midi 55.wav",
+  "pluck midi 57.wav",
+  "pluck midi 59.wav",
+  "pluck midi 60.wav",
+  "pluck midi 62.wav",
+  "pluck midi 64.wav",
+  "pluck midi 65.wav",
+  "pluck midi 67.wav",
+  "pluck midi 69.wav",
+  "pluck midi 71.wav"
 };
 
 static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
@@ -86,37 +121,45 @@ void setup()
   // Enable amplifier IC using pin 8
   pinMode     (8, OUTPUT);
   digitalWrite(8, LOW);
+
+  audio.speakerPin = 9;
+
+  if (!sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED))
+  {
+    Serial.println("SD FAIL");
+  }
+  else
+  {
+    Serial.println("SD OK");
+  }
 }
 
 void loop()
 {
-  static uint8_t volume = 1; // 0-127 for analogWrite()
+  static char *sound_file = "";
   static uint8_t active_led = LED_NONE;
 
   const uint8_t active_key = get_key();
 
   if (active_key != KEY_NONE)
   {
-    // Key beep on speaker
-    analogWrite(9, volume);
-
     if (active_key != active_led)
     {
       active_led = active_key;
+      sound_file = sound_files[active_key];
+      audio.play(sound_file);
 
-      // Debug led change events
-      Serial.print("Led: ");
-      Serial.println(active_led+1);
+      // Debug
+      Serial.print("Playing: ");
+      Serial.println(sound_file);
     }
-  }
-  else
-  {
-    // Stop beeping
-    analogWrite(9, 0);
   }
 
   // Restore led output after using the grid for key input
   set_led(active_led);
+
+  // Amplifier shutdown control
+  digitalWrite(8, !audio.isPlaying());
 
   // Keep the led on for a while to be visible
   delay(1);
