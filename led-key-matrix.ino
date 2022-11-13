@@ -6,7 +6,6 @@
 #include <SimpleKeypad.h>
 #include <SdFat.h>
 #include <TMRpcm.h>
-#include <SPI.h>
 
 #define KEY_NONE 0
 #define LED_NONE 0
@@ -66,9 +65,6 @@ void set_led(uint8_t led)
 
 void setup()
 {
-  // Debug
-  Serial.begin(115200);
-
   // Enable amplifier IC
   pinMode     (AMP_SHUTDOWN_PIN, OUTPUT);
   digitalWrite(AMP_SHUTDOWN_PIN, LOW);
@@ -76,26 +72,27 @@ void setup()
   audio.speakerPin = SPEAKER_PIN;
 
   // Enable SD-card
-  bool sd_ok = sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED);
-  Serial.println(sd_ok ? "SD OK" : "SD FAIL");
+  if (!sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED))
+  {
+    SPCR = 0x00; // Disable SPI to free up the builtin led
+    pinMode     (LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 }
 
 void loop()
 {
-  static char *sound_file = "";
   static uint8_t active_led = LED_NONE;
 
   const uint8_t active_key = get_key();
 
   if (active_key != KEY_NONE)
   {
+    // Remember led after key deactivates
     active_led = active_key;
-    sound_file = sound_files[active_key];
-    audio.play(sound_file);
 
-    // Debug
-    Serial.print("Playing: ");
-    Serial.println(sound_file);
+    // Play a sound in the background (non-blocking)
+    audio.play(sound_files[active_key]);
   }
 
   // Restore led output after using the grid for key input
