@@ -1,12 +1,11 @@
 #define GRID_SIZE 4
 #define SD_ChipSelectPin 2
+#define SPEAKER_PIN 9
+#define AMP_SHUTDOWN_PIN 8
 
 #include <SdFat.h>
-SdFat sd;
-
 #include <TMRpcm.h>
 #include <SPI.h>
-TMRpcm audio;
 
 enum keys {
   KEY_1 , KEY_2 , KEY_3 , KEY_4 ,
@@ -33,30 +32,18 @@ enum sounds {
 };
 
 static const char *sound_files[SOUND_COUNT] = {
-  "pluck midi 45.wav",
-  "pluck midi 47.wav",
-  "pluck midi 48.wav",
-  "pluck midi 50.wav",
-  "pluck midi 52.wav",
-  "pluck midi 53.wav",
-  "pluck midi 55.wav",
-  "pluck midi 57.wav",
-  "pluck midi 59.wav",
-  "pluck midi 60.wav",
-  "pluck midi 62.wav",
-  "pluck midi 64.wav",
-  "pluck midi 65.wav",
-  "pluck midi 67.wav",
-  "pluck midi 69.wav",
-  "pluck midi 71.wav"
+  "pluck midi 45.wav", "pluck midi 47.wav", "pluck midi 48.wav", "pluck midi 50.wav",
+  "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
+  "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
+  "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"
 };
 
 static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
 static const uint8_t COL_PIN[GRID_SIZE] = {4, 5, 6, 7};
 
-/*
- *
- */
+SdFat sd;
+TMRpcm audio;
+
 void setup_keys()
 {
   for (size_t i=0; i<GRID_SIZE; i++)
@@ -100,38 +87,26 @@ void set_led(enum leds led)
   uint8_t x = led % GRID_SIZE;
   uint8_t y = led / GRID_SIZE;
 
-  if ((LED_NONE == led) || (y >= GRID_SIZE))
-  {
-    return;
-  }
-  else
-  {
-    pinMode     (COL_PIN[x], OUTPUT);
-    digitalWrite(COL_PIN[x], HIGH);
-    pinMode     (ROW_PIN[y], OUTPUT);
-    digitalWrite(ROW_PIN[y], LOW);
-  }
+  pinMode     (COL_PIN[x], OUTPUT);
+  digitalWrite(COL_PIN[x], HIGH);
+  pinMode     (ROW_PIN[y], OUTPUT);
+  digitalWrite(ROW_PIN[y], LOW);
 }
 
 void setup()
 {
   // Debug
   Serial.begin(115200);
-  
-  // Enable amplifier IC using pin 8
-  pinMode     (8, OUTPUT);
-  digitalWrite(8, LOW);
 
-  audio.speakerPin = 9;
+  // Enable amplifier IC
+  pinMode     (AMP_SHUTDOWN_PIN, OUTPUT);
+  digitalWrite(AMP_SHUTDOWN_PIN, LOW);
 
-  if (!sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED))
-  {
-    Serial.println("SD FAIL");
-  }
-  else
-  {
-    Serial.println("SD OK");
-  }
+  audio.speakerPin = SPEAKER_PIN;
+
+  // Enable SD-card
+  bool sd_ok = sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED);
+  Serial.println(sd_ok ? "SD OK" : "SD FAIL");
 }
 
 void loop()
@@ -159,7 +134,7 @@ void loop()
   set_led(active_led);
 
   // Amplifier shutdown control
-  digitalWrite(8, !audio.isPlaying());
+  digitalWrite(AMP_SHUTDOWN_PIN, !audio.isPlaying());
 
   // Keep the led on for a while to be visible
   delay(1);
