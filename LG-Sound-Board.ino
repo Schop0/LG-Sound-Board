@@ -18,23 +18,21 @@ static const char *sound_files[] = {
   "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"
 };
 
-static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
-static const uint8_t COL_PIN[GRID_SIZE] = {4, 5, 6, 7};
+static const uint8_t ROW_PIN[GRID_SIZE] = { A0, A1, A2, A3 };
+static const uint8_t COL_PIN[GRID_SIZE] = { 4, 5, 6, 7 };
 static const char key_chars[GRID_SIZE][GRID_SIZE] = {
-  { 1,  2,  3,  4},
-  { 5,  6,  7,  8},
-  { 9, 10, 11, 12},
-  {13, 14, 15, 16}
+  { 1, 2, 3, 4 },
+  { 5, 6, 7, 8 },
+  { 9, 10, 11, 12 },
+  { 13, 14, 15, 16 }
 };
 
 SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 SdFat sd;
 TMRpcm audio;
 
-void setup_keys()
-{
-  for (size_t i=0; i<GRID_SIZE; i++)
-  {
+void setup_keys() {
+  for (size_t i = 0; i < GRID_SIZE; i++) {
     pinMode(ROW_PIN[i], INPUT_PULLUP);
     digitalWrite(COL_PIN[i], HIGH);
     pinMode(COL_PIN[i], INPUT);
@@ -45,49 +43,43 @@ void setup_keys()
  * Scan a key matrix
  * Return the number of a single pressed key or KEY_NONE
  */
-uint8_t get_key()
-{
+uint8_t get_key() {
   setup_keys();
   return keypad.getKey();
 }
 
-void set_led(uint8_t led)
-{
+void set_led(uint8_t led) {
   led--;
   uint8_t x = led % GRID_SIZE;
   uint8_t y = led / GRID_SIZE;
 
-  pinMode     (COL_PIN[x], OUTPUT);
+  pinMode(COL_PIN[x], OUTPUT);
   digitalWrite(COL_PIN[x], HIGH);
-  pinMode     (ROW_PIN[y], OUTPUT);
+  pinMode(ROW_PIN[y], OUTPUT);
   digitalWrite(ROW_PIN[y], LOW);
 }
 
-void setup()
-{
+void setup() {
   // Enable amplifier IC
-  pinMode     (AMP_SHUTDOWN_PIN, OUTPUT);
+  pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
   digitalWrite(AMP_SHUTDOWN_PIN, LOW);
 
   audio.speakerPin = SPEAKER_PIN;
 
   // Enable SD-card
-  if (!sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED))
-  {
-    SPCR = 0x00; // Disable SPI to free up the builtin led
-    pinMode     (LED_BUILTIN, OUTPUT);
+  if (!sd.begin(SD_ChipSelectPin, SPI_FULL_SPEED)) {
+    SPCR = 0x00;  // Disable SPI to free up the builtin led
+    pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
   }
 }
 
-void loop()
-{
+void loop() {
   static uint8_t active_led = LED_NONE;
 
   const uint8_t active_key = get_key();
 
-  if (active_key != KEY_NONE)
-  {
+  if (active_key != KEY_NONE) {
     // Remember led after key deactivates
     active_led = active_key;
 
