@@ -27,11 +27,12 @@ static const char key_chars[GRID_SIZE][GRID_SIZE] = {
   { 13, 14, 15, 16 }
 };
 
+static bool pixels[GRID_SIZE][GRID_SIZE];
 SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 SdFat sd;
 TMRpcm audio;
 
-void setup_keys() {
+void setup_grid() {
   for (size_t i = 0; i < GRID_SIZE; i++) {
     pinMode(ROW_PIN[i], INPUT_PULLUP);
     digitalWrite(COL_PIN[i], HIGH);
@@ -44,7 +45,7 @@ void setup_keys() {
  * Return the number of a single pressed key or KEY_NONE
  */
 uint8_t get_key() {
-  setup_keys();
+  setup_grid();
   return keypad.getKey();
 }
 
@@ -53,10 +54,8 @@ void set_led(uint8_t led) {
   uint8_t x = led % GRID_SIZE;
   uint8_t y = led / GRID_SIZE;
 
-  pinMode(COL_PIN[x], OUTPUT);
-  digitalWrite(COL_PIN[x], HIGH);
-  pinMode(ROW_PIN[y], OUTPUT);
-  digitalWrite(ROW_PIN[y], LOW);
+  // Toggle pixel
+  pixels[x][y] = !pixels[x][y];
 }
 
 void setup() {
@@ -74,6 +73,28 @@ void setup() {
   }
 }
 
+void leds_refresh() {
+  static size_t row = 0;
+
+  // Disable all leds
+  setup_grid();
+
+  // Write pixels to columns
+  for (size_t col = 0; col < GRID_SIZE; col++) {
+    digitalWrite(COL_PIN[col], pixels[col][row]);
+    pinMode(COL_PIN[col], OUTPUT);
+  }
+
+  // Activate row for a short time, blocking
+  pinMode(ROW_PIN[row], OUTPUT);
+  digitalWrite(ROW_PIN[row], LOW);
+  delay(1);
+  pinMode(ROW_PIN[row], INPUT_PULLUP);
+
+  // Prepare the next row number
+  ++row %= GRID_SIZE;
+}
+
 void loop() {
   static uint8_t active_led = LED_NONE;
 
@@ -81,18 +102,15 @@ void loop() {
 
   if (active_key != KEY_NONE) {
     // Remember led after key deactivates
-    active_led = active_key;
+    set_led(active_key);
 
     // Play a sound in the background (non-blocking)
     audio.play(sound_files[active_key]);
   }
 
-  // Restore led output after using the grid for key input
-  set_led(active_led);
-
   // Amplifier shutdown control
   digitalWrite(AMP_SHUTDOWN_PIN, !audio.isPlaying());
 
   // Keep the led on for a while to be visible
-  delay(1);
+  leds_refresh();
 }
