@@ -58,6 +58,19 @@ void set_led(uint8_t led) {
   pixels[x][y] = !pixels[x][y];
 }
 
+__attribute((noreturn))
+void test_infrared_receiver(uint8_t outputPin)
+{
+  bitClear(PRR, PRADC); // Disable ADC power saving
+  bitClear(ADCSRA, ADEN); // Disable ADC to use multiplexer for comparator
+  bitSet(ADCSRB, ACME); // Analogue Comparator Multiplexer Enable
+  bitSet(ACSR, ACBG);  // Select Analog Comparator Bandgap reference voltage
+  ADMUX = 6;  // Select ADC6 (pin A6) on the multiplexer
+  pinMode(outputPin, OUTPUT); // Prepare output pin
+  while (true) // Put demodulated signal on output pun
+    digitalWrite(outputPin, bitRead(ACSR, ACO));
+}
+
 void setup() {
   // Enable amplifier IC
   pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
@@ -71,6 +84,9 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
   }
+
+  // Point any remote control at the sensor and watch it's signal on the Arduino led
+  test_infrared_receiver(LED_BUILTIN);
 }
 
 void leds_refresh() {
