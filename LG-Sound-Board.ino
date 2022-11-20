@@ -32,9 +32,9 @@ SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 SdFat sd;
 TMRpcm audio;
 
-void setup_grid() {
+void setup_grid(uint8_t rowMode) {
   for (size_t i = 0; i < GRID_SIZE; i++) {
-    pinMode(ROW_PIN[i], INPUT_PULLUP);
+    pinMode(ROW_PIN[i], rowMode);
     digitalWrite(COL_PIN[i], HIGH);
     pinMode(COL_PIN[i], INPUT);
   }
@@ -45,7 +45,7 @@ void setup_grid() {
  * Return the number of a single pressed key or KEY_NONE
  */
 uint8_t get_key() {
-  setup_grid();
+  setup_grid(INPUT_PULLUP);
   return keypad.getKey();
 }
 
@@ -77,19 +77,22 @@ void leds_refresh() {
   static size_t row = 0;
 
   // Disable all leds
-  setup_grid();
+  setup_grid(INPUT);
 
   // Write pixels to columns
   for (size_t col = 0; col < GRID_SIZE; col++) {
-    digitalWrite(COL_PIN[col], pixels[col][row]);
-    pinMode(COL_PIN[col], OUTPUT);
+    if (pixels[col][row])
+    {
+      digitalWrite(COL_PIN[col], HIGH);
+      pinMode(COL_PIN[col], OUTPUT);
+    }
   }
 
   // Activate row for a short time, blocking
   pinMode(ROW_PIN[row], OUTPUT);
   digitalWrite(ROW_PIN[row], LOW);
   delay(1);
-  pinMode(ROW_PIN[row], INPUT_PULLUP);
+  pinMode(ROW_PIN[row], INPUT);
 
   // Prepare the next row number
   ++row %= GRID_SIZE;
