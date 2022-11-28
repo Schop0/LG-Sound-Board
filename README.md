@@ -13,6 +13,7 @@ Nice to have
 
 ### Hardware
 - [ ] Wiring A20K potmeter
+- [ ] Wiring line out
 
 Nice to have
 - [ ] Extra sensor input
