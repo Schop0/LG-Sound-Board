@@ -83,10 +83,10 @@ void setup() {
     SPCR = 0x00;  // Disable SPI to free up the builtin led
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-  }
 
   // Point any remote control at the sensor and watch it's signal on the Arduino led
-  test_infrared_receiver(LED_BUILTIN);
+    test_infrared_receiver(LED_BUILTIN);
+  }
 }
 
 void leds_refresh() {
