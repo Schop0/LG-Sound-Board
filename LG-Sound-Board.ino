@@ -13,7 +13,7 @@
 
 
 static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
-uint8_t sound_bank_counter = 0;
+static uint8_t sound_bank_counter = 0;
 
 static const char *sound_files[NUMBER_OF_SOUND_BANKS][GRID_SIZE * GRID_SIZE + 1] = {
     {"",
