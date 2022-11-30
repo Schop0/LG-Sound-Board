@@ -9,16 +9,26 @@
 
 #define KEY_NONE 0
 #define LED_NONE 0
+#define SOUND_BANK 0
 
-static const char *sound_files[] = {
-  "",
-  "pluck midi 45.wav", "pluck midi 47.wav", "pluck midi 48.wav", "pluck midi 50.wav",
-  "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
-  "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
-  "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"
+
+static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
+static const uint8_t sound_bank_counter = 0;
+
+static const char *sound_files[NUMBER_OF_SOUND_BANKS][GRID_SIZE * GRID_SIZE + 1] = {
+    {"",
+     "", "pluck midi 47.wav", "pluck midi 48.wav", "pluck midi 50.wav",
+     "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
+     "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
+     "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"},
+    {"",
+     "", "pluck midi 45.wav", "pluck midi 48.wav", "pluck midi 50.wav",
+     "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
+     "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
+     "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"},
 };
 
-static const uint8_t ROW_PIN[GRID_SIZE] = { A0, A1, A2, A3 };
+static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
 static const uint8_t COL_PIN[GRID_SIZE] = { 4, 5, 6, 7 };
 static const char key_chars[GRID_SIZE][GRID_SIZE] = {
   { 1, 2, 3, 4 },
@@ -103,12 +113,16 @@ void loop() {
 
   const uint8_t active_key = get_key();
 
-  if (active_key != KEY_NONE) {
+  if (active_key == 1) {
+    // press first button for changing sound bank
+    sound_bank_counter++;
+  }
+  else if (active_key != KEY_NONE) {
     // Remember led after key deactivates
     set_led(active_key);
 
     // Play a sound in the background (non-blocking)
-    audio.play(sound_files[active_key]);
+    audio.play(sound_files[sound_bank_counter % NUMBER_OF_SOUND_BANKS][active_key]);
   }
 
   // Amplifier shutdown control
