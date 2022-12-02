@@ -3,6 +3,8 @@
 #define SPEAKER_PIN 9
 #define AMP_SHUTDOWN_PIN 8
 
+#include "pcmConfig.h"
+
 #include <SimpleKeypad.h>
 #include <SdFat.h>
 #include <TMRpcm.h>
