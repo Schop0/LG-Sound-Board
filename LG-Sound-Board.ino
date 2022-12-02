@@ -3,6 +3,8 @@
 #define SPEAKER_PIN 9
 #define AMP_SHUTDOWN_PIN 8
 
+#include "pcmConfig.h"
+
 #include <SimpleKeypad.h>
 #include <SdFat.h>
 #include <TMRpcm.h>
@@ -68,6 +70,27 @@ void set_led(uint8_t led) {
   pixels[x][y] = !pixels[x][y];
 }
 
+uint8_t IRDebugPin = 0;
+ISR(ANALOG_COMP_vect)
+{
+  if (IRDebugPin)
+  {
+    digitalWrite(IRDebugPin, bitRead(ACSR, ACO));
+  }
+}
+
+void test_infrared_receiver(uint8_t outputPin)
+{
+  bitClear(PRR, PRADC); // Disable ADC power saving
+  bitClear(ADCSRA, ADEN); // Disable ADC to use multiplexer for comparator
+  bitSet(ADCSRB, ACME); // Analogue Comparator Multiplexer Enable
+  bitSet(ACSR, ACBG);  // Select Analog Comparator Bandgap reference voltage
+  ADMUX = 6;  // Select ADC6 (pin A6) on the multiplexer
+  bitSet(ACSR, ACIE); // Enable interrupts (default on toggle / both edges)
+  pinMode(outputPin, OUTPUT); // Prepare output pin
+  IRDebugPin = outputPin; // Pass outputPin on to interrupt handler
+}
+
 void setup() {
   // Enable amplifier IC
   pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
@@ -80,6 +103,9 @@ void setup() {
     SPCR = 0x00;  // Disable SPI to free up the builtin led
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+
+  // Point any remote control at the sensor and watch it's signal on the Arduino led
+    test_infrared_receiver(LED_BUILTIN);
   }
 }
 
