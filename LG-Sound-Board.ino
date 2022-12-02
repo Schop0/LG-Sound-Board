@@ -58,7 +58,15 @@ void set_led(uint8_t led) {
   pixels[x][y] = !pixels[x][y];
 }
 
-__attribute((noreturn))
+uint8_t IRDebugPin = 0;
+ISR(ANALOG_COMP_vect)
+{
+  if (IRDebugPin)
+  {
+    digitalWrite(IRDebugPin, bitRead(ACSR, ACO));
+  }
+}
+
 void test_infrared_receiver(uint8_t outputPin)
 {
   bitClear(PRR, PRADC); // Disable ADC power saving
@@ -66,9 +74,9 @@ void test_infrared_receiver(uint8_t outputPin)
   bitSet(ADCSRB, ACME); // Analogue Comparator Multiplexer Enable
   bitSet(ACSR, ACBG);  // Select Analog Comparator Bandgap reference voltage
   ADMUX = 6;  // Select ADC6 (pin A6) on the multiplexer
+  bitSet(ACSR, ACIE); // Enable interrupts (default on toggle / both edges)
   pinMode(outputPin, OUTPUT); // Prepare output pin
-  while (true) // Put demodulated signal on output pun
-    digitalWrite(outputPin, bitRead(ACSR, ACO));
+  IRDebugPin = outputPin; // Pass outputPin on to interrupt handler
 }
 
 void setup() {
