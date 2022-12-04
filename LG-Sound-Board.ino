@@ -14,20 +14,20 @@
 #define SOUND_BANK 0
 
 
-static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
 static uint8_t sound_bank_counter = 0;
+static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
 
 static const char *sound_files[NUMBER_OF_SOUND_BANKS][GRID_SIZE * GRID_SIZE + 1] = {
     {"",
-     "", "pluck midi 47.wav", "pluck midi 48.wav", "pluck midi 50.wav",
-     "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
-     "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
-     "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"},
+     "", "ambulance.wav", "mobile.wav", "horn.wav",
+     "handgun.wav", "transition.wav", "windows_95.wav", "movement.wav",
+     "train_whistle.wav", "ghost_whoosh.wav", "window_break.wav", "matrix_printer.wav",
+     "bullet.wav", "dog.wav", "dial_up.wav", "futuristic_gunshot.wav"},
     {"",
-     "", "pluck midi 45.wav", "pluck midi 48.wav", "pluck midi 50.wav",
-     "pluck midi 52.wav", "pluck midi 53.wav", "pluck midi 55.wav", "pluck midi 57.wav",
-     "pluck midi 59.wav", "pluck midi 60.wav", "pluck midi 62.wav", "pluck midi 64.wav",
-     "pluck midi 65.wav", "pluck midi 67.wav", "pluck midi 69.wav", "pluck midi 71.wav"},
+     "", "glass.wav", "glass.wav", "glass.wav",
+     "glass.wav", "glass.wav", "glass.wav", "glass.wav",
+     "glass.wav", "glass.wav", "glass.wav", "glass.wav",
+     "glass.wav", "glass.wav", "glass.wav", "glass.wav"},
 };
 
 static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};

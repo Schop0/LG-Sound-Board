@@ -1,5 +1,10 @@
 ## TODOs
 
+### Audio
+- [x] Convert audio to 8 bit / 22kHz script
+- [x] Generate `static const char *sound_files` script
+- [x] Soundboard samples
+
 ### Software
 - [x] Receive IR signal
 - [ ] Decode IR signal
