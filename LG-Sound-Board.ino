@@ -1,4 +1,6 @@
 #define GRID_SIZE 4
+#define IR_QUEUE_SIZE 32
+
 #define SD_ChipSelectPin 2
 #define SPEAKER_PIN 9
 #define AMP_SHUTDOWN_PIN 8
@@ -8,6 +10,7 @@
 #include <SimpleKeypad.h>
 #include <SdFat.h>
 #include <TMRpcm.h>
+#include <cppQueue.h>
 
 #define KEY_NONE 0
 #define LED_NONE 0
@@ -33,6 +36,22 @@ static bool pixels[GRID_SIZE][GRID_SIZE];
 SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 SdFat sd;
 TMRpcm audio;
+
+typedef struct {
+  uint16_t deltaMicros;
+  bool state;
+} irEvent_t;
+
+irEvent_t irEventQueueData[IR_QUEUE_SIZE];
+
+cppQueue irEventQueue(
+  sizeof(irEvent_t), // Size of record
+  IR_QUEUE_SIZE, // Number of records
+  FIFO, // FIFO or LIFO operation
+  false, // Overwrite oldest when full
+  irEventQueueData, // Static memory pointer
+  sizeof(irEventQueueData) // Static memory size
+);
 
 void setup_grid(uint8_t rowMode) {
   for (size_t i = 0; i < GRID_SIZE; i++) {
@@ -60,16 +79,29 @@ void set_led(uint8_t led) {
   pixels[x][y] = !pixels[x][y];
 }
 
-uint8_t IRDebugPin = 0;
 ISR(ANALOG_COMP_vect)
 {
-  if (IRDebugPin)
+  static unsigned long timeLast = 0;
+
+  const unsigned long timeNow = micros();
+  unsigned long timeDelta = timeNow - timeLast;
+  timeLast = timeNow;
+
+  // Timeout on overflow
+  if (timeDelta > UINT16_MAX)
   {
-    digitalWrite(IRDebugPin, bitRead(ACSR, ACO));
+    timeDelta = 0;
   }
+
+  const irEvent_t event = {
+    (uint16_t)timeDelta,
+    bitRead(ACSR, ACO)
+  };
+
+  irEventQueue.push(&event);
 }
 
-void test_infrared_receiver(uint8_t outputPin)
+void test_infrared_receiver()
 {
   bitClear(PRR, PRADC); // Disable ADC power saving
   bitClear(ADCSRA, ADEN); // Disable ADC to use multiplexer for comparator
@@ -77,8 +109,6 @@ void test_infrared_receiver(uint8_t outputPin)
   bitSet(ACSR, ACBG);  // Select Analog Comparator Bandgap reference voltage
   ADMUX = 6;  // Select ADC6 (pin A6) on the multiplexer
   bitSet(ACSR, ACIE); // Enable interrupts (default on toggle / both edges)
-  pinMode(outputPin, OUTPUT); // Prepare output pin
-  IRDebugPin = outputPin; // Pass outputPin on to interrupt handler
 }
 
 void setup() {
@@ -93,10 +123,10 @@ void setup() {
     SPCR = 0x00;  // Disable SPI to free up the builtin led
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
-
-  // Point any remote control at the sensor and watch it's signal on the Arduino led
-    test_infrared_receiver(LED_BUILTIN);
   }
+
+  Serial.begin(115200);
+  test_infrared_receiver();
 }
 
 void leds_refresh() {
@@ -142,4 +172,15 @@ void loop() {
 
   // Keep the led on for a while to be visible
   leds_refresh();
+
+  // Debug infrared events
+  irEvent_t irEvent;
+  while (!irEventQueue.isEmpty()) {
+    noInterrupts();
+    irEventQueue.pop(&irEvent);
+    interrupts();
+    Serial.print(irEvent.state);
+    Serial.print(" ");
+    Serial.println(irEvent.deltaMicros);
+  }
 }
