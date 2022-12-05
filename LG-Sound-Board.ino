@@ -1,5 +1,5 @@
 #define GRID_SIZE 4
-#define IR_QUEUE_SIZE 32
+#define IR_QUEUE_SIZE 10
 
 #define SD_ChipSelectPin 2
 #define SPEAKER_PIN 9
@@ -38,8 +38,8 @@ SdFat sd;
 TMRpcm audio;
 
 typedef struct {
-  uint16_t deltaMicros;
-  bool state;
+  uint16_t microsLow;
+  uint16_t microsHigh;
 } irEvent_t;
 
 irEvent_t irEventQueueData[IR_QUEUE_SIZE];
@@ -82,6 +82,7 @@ void set_led(uint8_t led) {
 ISR(ANALOG_COMP_vect)
 {
   static unsigned long timeLast = 0;
+  static irEvent_t event = { 0 };
 
   const unsigned long timeNow = micros();
   unsigned long timeDelta = timeNow - timeLast;
@@ -93,12 +94,18 @@ ISR(ANALOG_COMP_vect)
     timeDelta = 0;
   }
 
-  const irEvent_t event = {
-    (uint16_t)timeDelta,
-    bitRead(ACSR, ACO)
-  };
-
-  irEventQueue.push(&event);
+  // Capture low and high timings, then fire an event
+  switch (bitRead(ACSR, ACO)) {
+    case HIGH:
+      event.microsLow = timeDelta;
+      break;
+    case LOW:
+      event.microsHigh = timeDelta;
+      irEventQueue.push(&event);
+      event.microsHigh = 0;
+      event.microsLow = 0;
+      break;
+  }
 }
 
 void test_infrared_receiver()
@@ -179,8 +186,10 @@ void loop() {
     noInterrupts();
     irEventQueue.pop(&irEvent);
     interrupts();
-    Serial.print(irEvent.state);
-    Serial.print(" ");
-    Serial.println(irEvent.deltaMicros);
+    Serial.print(irEvent.microsLow);
+    Serial.print(" us Low, ");
+    Serial.print(irEvent.microsHigh);
+    Serial.print(" us High");
+    Serial.println();
   }
 }
