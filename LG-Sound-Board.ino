@@ -232,6 +232,20 @@ unsigned long int irDecoder() {
   return returnData;
 }
 
+const char * soundFileFromIrCode(unsigned long irCode) {
+  switch (irCode) {
+    case 0x01FE40BF : return sound_files[1];
+    case 0x01FE58A7 : return sound_files[2];
+    case 0x01FEA05F : return sound_files[3];
+    case 0x01FE609F : return sound_files[4];
+    case 0x01FE20DF : return sound_files[5];
+    case 0x01FE18E7 : return sound_files[6];
+    case 0x01FED22D : return sound_files[7];
+    case 0x01FE52AD : return sound_files[8];
+    default         : return sound_files[16];
+  }
+}
+
 void loop() {
   static uint8_t active_led = LED_NONE;
 
