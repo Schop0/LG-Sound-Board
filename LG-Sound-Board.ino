@@ -161,6 +161,77 @@ void leds_refresh() {
   ++row %= GRID_SIZE;
 }
 
+/*
+ * Infrared decoder pseudo-statemachine
+ * Protocol is reverse engineered from an arbitrary protocol. In this case:
+ * the remote control of the KEF LS50 Wireless speakers
+ * This remote transmits about 32 bits of data and some headers
+ * Different high and low durations translate to different bits or header fields
+ */
+unsigned long int irDecoder() {
+  static unsigned long int irData = 0;
+  static unsigned int irBit = 0;
+
+  unsigned long int returnData = 0;
+  irEvent_t irEvent;
+  enum {
+    SHORT = 0,
+    LONG = 1,
+    START = 2,
+    END = 3,
+  } irState;
+
+  while (!irEventQueue.isEmpty()) {
+    // Temporarily disable interrupts for an atomic queue operation
+    // May interfere with time critical audio
+    noInterrupts();
+    irEventQueue.pop(&irEvent);
+    interrupts();
+
+    // Protocol specific decoding with magic numbers for timing
+    if (irEvent.microsLow == 0) {
+      irState = START;
+    } else if (irEvent.microsHigh > 1000) {
+      irState = END;
+    } else if (irEvent.microsLow > 2000) {
+      irState = START;
+    } else {
+      irState = (irEvent.microsLow < 1000)
+              ? SHORT
+              : LONG;
+    }
+
+    Serial.print(irEvent.microsLow);
+    Serial.print(" us Low, ");
+    Serial.print(irEvent.microsHigh);
+    Serial.print(" us High, irState: ");
+    Serial.print(irState);
+    Serial.println();
+
+    switch (irState) {
+      case START :
+        irData = 0;
+        break;
+      case SHORT :
+        irBit++;
+        // Shift in a zero
+        irData <<= 1;
+        break;
+      case LONG :
+        irBit++;
+        // Shift in a one
+        irData <<= 1;
+        irData |= 1;
+        break;
+      case END :
+        returnData = irData;
+        break;
+    }
+  }
+
+  return returnData;
+}
+
 void loop() {
   static uint8_t active_led = LED_NONE;
 
@@ -181,15 +252,10 @@ void loop() {
   leds_refresh();
 
   // Debug infrared events
-  irEvent_t irEvent;
-  while (!irEventQueue.isEmpty()) {
-    noInterrupts();
-    irEventQueue.pop(&irEvent);
-    interrupts();
-    Serial.print(irEvent.microsLow);
-    Serial.print(" us Low, ");
-    Serial.print(irEvent.microsHigh);
-    Serial.print(" us High");
+  const unsigned long int irCode = irDecoder();
+  if (irCode) {
+    Serial.print("IR Code 0x");
+    Serial.print(irCode, HEX);
     Serial.println();
   }
 }
