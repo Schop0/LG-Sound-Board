@@ -201,12 +201,14 @@ unsigned long int irDecoder() {
               : LONG;
     }
 
+    /* Not enough processing power for IR, Audio and UART
     Serial.print(irEvent.microsLow);
     Serial.print(" us Low, ");
     Serial.print(irEvent.microsHigh);
     Serial.print(" us High, irState: ");
     Serial.print(irState);
     Serial.println();
+    */
 
     switch (irState) {
       case START :
@@ -268,8 +270,11 @@ void loop() {
   // Debug infrared events
   const unsigned long int irCode = irDecoder();
   if (irCode) {
+    audio.play(soundFileFromIrCode(irCode));
+    /* Not enough processing power for IR, Audio and UART
     Serial.print("IR Code 0x");
     Serial.print(irCode, HEX);
     Serial.println();
+    */
   }
 }
