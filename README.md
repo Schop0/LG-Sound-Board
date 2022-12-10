@@ -1,12 +1,17 @@
 ## TODOs
 
+### Audio
+- [x] Convert audio to 8 bit / 22kHz script
+- [x] Generate `static const char *sound_files` script
+- [x] Soundboard samples
+
 ### Software
 - [x] Receive IR signal
 - [ ] Decode IR signal
 - [x] Map decoded IR signal to person/sound
 - [ ] Send modulated IR signal
-- [ ] Set one button for selecting sound bank
-- [ ] Make two (or more) sound banks available for TMRpcm
+- [x] Set one button for selecting sound bank
+- [x] Make two (or more) sound banks available for TMRpcm
 
 Nice to have
 - [ ] Link sensor input to play sound
