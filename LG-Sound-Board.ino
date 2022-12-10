@@ -51,7 +51,7 @@ const char filename_30[] PROGMEM = "glass.wav";
 const char filename_31[] PROGMEM = "glass.wav";
 const char filename_32[] PROGMEM = "glass.wav";
 
-PGM_P const sound_files[] PROGMEM =
+PGM_P sound_files[] =
     {
         filename_0,
         filename_1,
@@ -148,10 +148,10 @@ void test_infrared_receiver(uint8_t outputPin)
   IRDebugPin = outputPin; // Pass outputPin on to interrupt handler
 }
 
-char *readString(void * flash_ptr)
+char *readString(PGM_P flash_ptr)
 {
   static char stringbuf[32] = {'\0'};
-  strcpy_P(stringbuf, (char *)pgm_read_word(flash_ptr));
+  strcpy_P(stringbuf, flash_ptr);
   return stringbuf;
 }
 
@@ -213,7 +213,7 @@ void loop() {
     set_led(active_key);
 
     // Play a sound in the background (non-blocking)
-    audio.play(readString(&(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key])));
+    audio.play(readString(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
   }
 
   // Amplifier shutdown control
