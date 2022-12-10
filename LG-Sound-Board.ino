@@ -18,23 +18,23 @@ static uint8_t sound_bank_counter = 0;
 static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
 
 const char filename_0[] PROGMEM = "";
-const char filename_1[] PROGMEM = "ambulance.wav";
-const char filename_2[] PROGMEM = "mobile.wav";
-const char filename_3[] PROGMEM = "horn.wav";
-const char filename_4[] PROGMEM = "handgun.wav";
-const char filename_5[] PROGMEM = "transition.wav";
-const char filename_6[] PROGMEM = "windows_95.wav";
-const char filename_7[] PROGMEM = "movement.wav";
-const char filename_8[] PROGMEM = "train_whistle.wav";
-const char filename_9[] PROGMEM = "ghost_whoosh.wav";
-const char filename_10[] PROGMEM = "window_break.wav";
-const char filename_11[] PROGMEM = "matrix_printer.wav";
-const char filename_12[] PROGMEM = "bullet.wav";
-const char filename_13[] PROGMEM = "dog.wav";
-const char filename_14[] PROGMEM = "dial_up.wav";
-const char filename_15[] PROGMEM = "futuristic_gunshot.wav";
-const char filename_16[] PROGMEM = "";
-const char filename_17[] PROGMEM = "glass.wav";
+const char filename_1[] PROGMEM = "";
+const char filename_2[] PROGMEM = "ambulance.wav";
+const char filename_3[] PROGMEM = "mobile.wav";
+const char filename_4[] PROGMEM = "horn.wav";
+const char filename_5[] PROGMEM = "handgun.wav";
+const char filename_6[] PROGMEM = "transition.wav";
+const char filename_7[] PROGMEM = "windows_95.wav";
+const char filename_8[] PROGMEM = "movement.wav";
+const char filename_9[] PROGMEM = "train_whistle.wav";
+const char filename_10[] PROGMEM = "ghost_whoosh.wav";
+const char filename_11[] PROGMEM = "window_break.wav";
+const char filename_12[] PROGMEM = "matrix_printer.wav";
+const char filename_13[] PROGMEM = "bullet.wav";
+const char filename_14[] PROGMEM = "dog.wav";
+const char filename_15[] PROGMEM = "dial_up.wav";
+const char filename_16[] PROGMEM = "futuristic_gunshot.wav";
+const char filename_17[] PROGMEM = "";
 const char filename_18[] PROGMEM = "glass.wav";
 const char filename_19[] PROGMEM = "glass.wav";
 const char filename_20[] PROGMEM = "glass.wav";
@@ -49,43 +49,43 @@ const char filename_28[] PROGMEM = "glass.wav";
 const char filename_29[] PROGMEM = "glass.wav";
 const char filename_30[] PROGMEM = "glass.wav";
 const char filename_31[] PROGMEM = "glass.wav";
+const char filename_32[] PROGMEM = "glass.wav";
 
 PGM_P const sound_files[] PROGMEM =
-{
-    filename_0,
-    filename_1,
-    filename_2,
-    filename_3,
-    filename_4,
-    filename_5,
-    filename_6,
-    filename_7,
-    filename_8,
-    filename_9,
-    filename_10,
-    filename_11,
-    filename_12,
-    filename_13,
-    filename_14,
-    filename_15,
-    filename_16,
-    filename_17,
-    filename_18,
-    filename_19,
-    filename_20,
-    filename_21,
-    filename_22,
-    filename_23,
-    filename_24,
-    filename_25,
-    filename_26,
-    filename_27,
-    filename_28,
-    filename_29,
-    filename_30,
-    filename_31
-};
-
+    {
+        filename_0,
+        filename_1,
+        filename_2,
+        filename_3,
+        filename_4,
+        filename_5,
+        filename_6,
+        filename_7,
+        filename_8,
+        filename_9,
+        filename_10,
+        filename_11,
+        filename_12,
+        filename_13,
+        filename_14,
+        filename_15,
+        filename_16,
+        filename_17,
+        filename_18,
+        filename_19,
+        filename_20,
+        filename_21,
+        filename_22,
+        filename_23,
+        filename_24,
+        filename_25,
+        filename_26,
+        filename_27,
+        filename_28,
+        filename_29,
+        filename_30,
+        filename_31,
+        filename_32};
 
 static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
 static const uint8_t COL_PIN[GRID_SIZE] = { 4, 5, 6, 7 };
