@@ -308,7 +308,7 @@ unsigned long int irDecoder() {
   return returnData;
 }
 
-const char * soundFileFromIrCode(unsigned long irCode) {
+PGM_P soundFileFromIrCode(unsigned long irCode) {
   switch (irCode) {
     case 0x01FE40BF : return sound_files[1];
     case 0x01FE58A7 : return sound_files[2];
@@ -349,7 +349,7 @@ void loop() {
   // Debug infrared events
   const unsigned long int irCode = irDecoder();
   if (irCode) {
-    audio.play(soundFileFromIrCode(irCode));
+    audio.play(readString(soundFileFromIrCode(irCode)));
     /* Not enough processing power for IR, Audio and UART
     Serial.print("IR Code 0x");
     Serial.print(irCode, HEX);
