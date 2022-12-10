@@ -148,6 +148,13 @@ void test_infrared_receiver(uint8_t outputPin)
   IRDebugPin = outputPin; // Pass outputPin on to interrupt handler
 }
 
+char *readString(void * flash_ptr)
+{
+  static char stringbuf[32] = {'\0'};
+  strcpy_P(stringbuf, (char *)pgm_read_word(flash_ptr));
+  return stringbuf;
+}
+
 void setup() {
   // Enable amplifier IC
   pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
@@ -206,7 +213,7 @@ void loop() {
     set_led(active_key);
 
     // Play a sound in the background (non-blocking)
-    audio.play(pgm_read_byte(&sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
+    audio.play(readString(&(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key])));
   }
 
   // Amplifier shutdown control
