@@ -200,20 +200,41 @@ void leds_refresh() {
 
 void loop() {
   static uint8_t active_led = LED_NONE;
+  static uint8_t previous_key = LED_NONE;
 
-  const uint8_t active_key = get_key();
+  uint8_t active_key = get_key();
 
-  if (active_key == 1) {
+  if (active_key == KEY_NONE) {
+    // Geen key, doe huidige led uit als klaar met audio
+    if (!audio.isPlaying()) {
+      if (active_led != LED_NONE) {
+        set_led(active_led);
+        active_led = LED_NONE;
+      }
+    }
+  } else if (active_key == 1) {
+    // switch mode
     // press first button for changing sound bank
     sound_bank_counter++;
     sound_bank_counter %= NUMBER_OF_SOUND_BANKS;
-  }
-  else if (active_key != KEY_NONE) {
-    // Remember led after key deactivates
-    set_led(active_key);
+    active_key = KEY_NONE;
+  } else if (previous_key == active_key) {
+    set_led(active_led);
+    active_led = LED_NONE;
+    active_key = KEY_NONE;
+    previous_key = KEY_NONE;
+    audio.stopPlayback();
+  } else {
+    if (previous_key != KEY_NONE) {
+      set_led(active_led);
+    }
 
-    // Play a sound in the background (non-blocking)
+    set_led(active_key);
+    active_led = active_key;
+
     audio.play(readString(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
+
+    previous_key = active_key;
   }
 
   // Amplifier shutdown control
