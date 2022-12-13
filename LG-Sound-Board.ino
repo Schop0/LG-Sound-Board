@@ -15,7 +15,7 @@
 
 
 static uint8_t sound_bank_counter = 0;
-static const uint8_t NUMBER_OF_SOUND_BANKS = 2;
+static const uint8_t NUMBER_OF_SOUND_BANKS = 5;
 
 const char filename_0[] PROGMEM = "";
 const char filename_1[] PROGMEM = "";
@@ -232,7 +232,13 @@ void loop() {
     set_led(active_key);
     active_led = active_key;
 
-    audio.play(readString(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
+    if (sound_bank_counter < 2) {
+      audio.play(readString(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
+    } else {
+      char numberedFileName[] = "00-00.wav";
+      snprintf(numberedFileName, sizeof numberedFileName, "%02d-%02d.wav", sound_bank_counter, active_key);
+      audio.play(numberedFileName);
+    }
 
     previous_key = active_key;
   }
