@@ -47,7 +47,7 @@ ISR(ANALOG_COMP_vect)
   }
 }
 
-void irInit()
+void irInitReceiver()
 {
   bitClear(PRR, PRADC); // Disable ADC power saving
   bitClear(ADCSRA, ADEN); // Disable ADC to use multiplexer for comparator
@@ -55,6 +55,36 @@ void irInit()
   bitSet(ACSR, ACBG);  // Select Analog Comparator Bandgap reference voltage
   ADMUX = 6;  // Select ADC6 (pin A6) on the multiplexer
   bitSet(ACSR, ACIE); // Enable interrupts (default on toggle / both edges)
+}
+
+void irInitTransmitter() {
+  // Turn off pin output driver
+  irLedOff();
+  // Disable Timer2 power saving
+  bitClear(PRR, PRTIM2);
+  // Reset Timer2 control registers
+  TCCR2A = 0;
+  TCCR2B = 0;
+  // COM2B1:0: Compare Match Output B Mode
+  // Mode 2: Clear OC2B on compare match
+  bitSet(TCCR2A, COM2B1);
+  // WGM22:0: Waveform Generation Mode
+  // Mode 7: Fast PWM counting up to OCR2A
+  bitSet(TCCR2A, WGM20);
+  bitSet(TCCR2A, WGM21);
+  bitSet(TCCR2B, WGM22);
+  // CS22:0: Clock Select
+  // clk/8 (from prescaler)
+  bitSet(TCCR2B, CS21);
+  // OCR2A sets frequency (clock frequency / prescaler / output frequency)
+  OCR2A = (16000000 / 8 / 38000);
+  // OCR2B sets duty cycle (relative to OCR2A)
+  OCR2B = OCR2A / 2;
+}
+
+void irInit() {
+  irInitReceiver();
+  irInitTransmitter();
 }
 
 /*
