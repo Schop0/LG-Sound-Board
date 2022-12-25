@@ -8,3 +8,6 @@
 
 extern SdFat sd;
 extern TMRpcm audio;
+
+const char *soundFileFromKey(unsigned int bank, unsigned int key);
+const char *soundFileFromIrCode(uint16_t irCode);
