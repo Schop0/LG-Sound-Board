@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-#define buffSize 254
+#define buffSize 100
 #define SD_FULLSPEED
 #define SDFAT
 
