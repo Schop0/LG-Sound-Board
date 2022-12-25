@@ -114,9 +114,6 @@ unsigned long int irDecoder() {
     irEventQueue.pop(&irEvent);
     interrupts();
 
-    // Debug
-    Serial.print("irEvent.microsHigh: "); Serial.println(irEvent.microsHigh);
-
     // Protocol specific decoding with magic numbers for timing
     if (irEvent.microsLow == 0) {
       irState = START;

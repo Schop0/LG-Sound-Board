@@ -20,8 +20,6 @@ void setup() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  Serial.begin(115200);
-
   irInit();
 }
 
@@ -46,9 +44,6 @@ void loop() {
 
   uint8_t active_key = get_key();
 
-  // Debug IR transmitter
-  irLedOff();
-
   if (active_key == KEY_NONE) {
     // Geen key, doe huidige led uit als klaar met audio
     if (!audio.isPlaying()) {
@@ -58,9 +53,6 @@ void loop() {
       }
     }
   } else if (active_key == 1) {
-    // Debug IR transmitter
-    irLedOn();
-
     // switch mode
     // press first button for changing sound bank
     sound_bank_counter++;
