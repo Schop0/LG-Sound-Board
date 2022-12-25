@@ -24,8 +24,20 @@ void setup() {
 }
 
 const char *soundFileFromKey(unsigned int bank, unsigned int key) {
-  static char fileName[10];
-  snprintf(fileName, sizeof fileName, "%02d-%02d.wav", bank, key);
+  static char fileName[50] = "";
+  const unsigned int lineNumber = bank * NUMBER_OF_SOUNDS_PER_BANK + key;
+
+  // The SD-card cannot simply be used by audio and main simultaneously
+  audio.stopPlayback();
+
+  SdFile index("index.txt", O_READ);
+
+  for (uint8_t line=0; line < lineNumber; line++) {
+    index.fgets(fileName, sizeof fileName);
+  }
+
+  fileName[strcspn(fileName, "\r\n")] = '\0';
+
   return fileName;
 }
 

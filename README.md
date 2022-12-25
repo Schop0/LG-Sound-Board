@@ -2,7 +2,7 @@
 
 ### Audio
 - [x] Convert audio to 8 bit / 22kHz script
-- [x] Generate `static const char *sound_files` script
+- [x] Configure sounds from sd-card without recompiling
 - [x] Soundboard samples
 
 ### Software

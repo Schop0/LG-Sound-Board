@@ -1,0 +1,79 @@
+
+ambulance.wav
+mobile.wav
+horn.wav
+handgun.wav
+transition.wav
+windows_95.wav
+movement.wav
+train_whistle.wav
+ghost_whoosh.wav
+window_break.wav
+matrix_printer.wav
+bullet.wav
+dog.wav
+dial_up.wav
+futuristic_gunshot.wav
+
+pluck midi 47.wav
+pluck midi 48.wav
+pluck midi 50.wav
+pluck midi 52.wav
+pluck midi 53.wav
+pluck midi 55.wav
+pluck midi 57.wav
+pluck midi 59.wav
+pluck midi 60.wav
+pluck midi 62.wav
+pluck midi 64.wav
+pluck midi 65.wav
+pluck midi 67.wav
+pluck midi 69.wav
+pluck midi 71.wav
+
+akelaklompenteef.wav
+bernhard.wav
+biertjedrinken.wav
+eenhmgerispaseenechtevent.wav
+financielezaken.wav
+flarr.wav
+flarretje.wav
+fuckinmaster.wav
+geudverdeume.wav
+harderwijker.wav
+hehebierrr.wav
+ikzegdat.wav
+jemibok.wav
+joerrrrrr.wav
+kankahoeahwatmotjenou.wav
+
+kitchen.wav
+klitsjeszang.wav
+kontzaad.wav
+laffetak.wav
+lam.wav
+likken.wav
+meenemen.wav
+monsadikopfn.wav
+mooi3.wav
+mumsels.wav
+piep.wav
+pjeupen.wav
+putjesboer.wav
+rengdengdeng.wav
+reupelsnaai.wav
+
+reupeltje.wav
+rullen.wav
+schalli.wav
+schwule.wav
+schwuletanz.wav
+snaaien.wav
+sobi.wav
+spritz.wav
+sprudelgenudel.wav
+stoer.wav
+supertittn.wav
+tradities.wav
+zevendronk.wav
+zwaffelen.wav
