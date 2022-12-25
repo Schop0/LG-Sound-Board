@@ -2,15 +2,41 @@
 
 SdFat sd;
 TMRpcm audio;
+char fileName[50] = "";
+
+void initSoundBankCount() {
+  getSoundBankCount();
+}
+
+unsigned int getSoundBankCount() {
+  static unsigned int soundBankCount = 0;
+
+  // Only once, if uninitialised, parse the index file
+  if (soundBankCount == 0) {
+    unsigned int lineCount = 0;
+
+    // The SD-card cannot simply be used by audio and main simultaneously
+    audio.stopPlayback();
+
+    SdFile index(INDEX_FILE_NAME, O_READ);
+
+    while(index.fgets(fileName, sizeof fileName) > 0) {
+      lineCount++;
+    }
+
+    soundBankCount = (lineCount + NUMBER_OF_SOUNDS_PER_BANK - 1 ) / NUMBER_OF_SOUNDS_PER_BANK;
+  }
+
+  return soundBankCount;
+}
 
 const char *soundFileFromKey(unsigned int bank, unsigned int key) {
-  static char fileName[50] = "";
   const unsigned int lineNumber = bank * NUMBER_OF_SOUNDS_PER_BANK + key;
 
   // The SD-card cannot simply be used by audio and main simultaneously
   audio.stopPlayback();
 
-  SdFile index("index.txt", O_READ);
+  SdFile index(INDEX_FILE_NAME, O_READ);
 
   for (uint8_t line=0; line < lineNumber; line++) {
     index.fgets(fileName, sizeof fileName);

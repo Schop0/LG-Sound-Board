@@ -21,6 +21,8 @@ void setup() {
   }
 
   irInit();
+
+  initSoundBankCount();
 }
 
 void loop() {
