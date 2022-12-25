@@ -23,17 +23,17 @@ void setup() {
   irInit();
 }
 
-PGM_P soundFileFromIrCode(unsigned long irCode) {
+PGM_P soundFileFromIrCode(uint16_t irCode) {
   switch (irCode) {
-    case 0x01FE40BF : return sound_files[1];
-    case 0x01FE58A7 : return sound_files[2];
-    case 0x01FEA05F : return sound_files[3];
-    case 0x01FE609F : return sound_files[4];
-    case 0x01FE20DF : return sound_files[5];
-    case 0x01FE18E7 : return sound_files[6];
-    case 0x01FED22D : return sound_files[7];
-    case 0x01FE52AD : return sound_files[8];
-    default         : return sound_files[16];
+    case 0x0140 : return sound_files[1];
+    case 0x0158 : return sound_files[2];
+    case 0x01A0 : return sound_files[3];
+    case 0x0160 : return sound_files[4];
+    case 0x0120 : return sound_files[5];
+    case 0x0118 : return sound_files[6];
+    case 0x01D2 : return sound_files[7];
+    case 0x0152 : return sound_files[8];
+    default     : return sound_files[16];
   }
 }
 
@@ -90,8 +90,8 @@ void loop() {
   leds_refresh();
 
   // Debug infrared events
-  const unsigned long int irCode = irDecoder();
-  if (irCode) {
-    audio.play(readString(soundFileFromIrCode(irCode)));
+  const IrCode_t irCode = irDecoder();
+  if (irCode.data) {
+    audio.play(readString(soundFileFromIrCode(irCode.data)));
   }
 }

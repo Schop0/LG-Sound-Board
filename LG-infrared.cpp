@@ -1,6 +1,5 @@
 #include "LG-infrared.h"
 #include <cppQueue.h>
-#include <Arduino.h>
 
 typedef struct {
   uint16_t microsLow;
@@ -88,17 +87,40 @@ void irInit() {
 }
 
 /*
+ * Decode NEC-style raw received bits into valid data or zero
+ */
+IrCode_t decodeNEC(uint32_t rawData) {
+  // The NEC protocol consists of 8-bit address and 8-bit data.
+  // Each followed by their logical inverse for a total of 4 bytes.
+  uint8_t *rawBytes = (uint8_t *) &rawData;
+  const uint8_t  address = rawBytes[3];
+  const uint8_t iaddress = rawBytes[2];
+  const uint8_t  command = rawBytes[1];
+  const uint8_t icommand = rawBytes[0];
+
+  IrCode_t decoded = {0};
+
+  // Verify the address and command match their inverse versions.
+  if ( ((uint8_t)~address == iaddress) && ((uint8_t)~command == icommand) ) {
+    decoded.address = address;
+    decoded.command = command;
+  }
+
+  return decoded;
+}
+
+/*
  * Infrared decoder pseudo-statemachine
  * Protocol is reverse engineered from an arbitrary protocol. In this case:
  * the remote control of the KEF LS50 Wireless speakers
- * This remote transmits about 32 bits of data and some headers
+ * This remote seems to transmit NEC-style codes
  * Different high and low durations translate to different bits or header fields
  */
-unsigned long int irDecoder() {
-  static unsigned long int irData = 0;
+IrCode_t irDecoder() {
+  static uint32_t irData = 0;
   static unsigned int irBit = 0;
 
-  unsigned long int returnData = 0;
+  IrCode_t returnData = {0};
   irEvent_t irEvent;
   enum {
     SHORT = 0,
@@ -143,7 +165,7 @@ unsigned long int irDecoder() {
         irData |= 1;
         break;
       case END :
-        returnData = irData;
+        returnData = decodeNEC(irData);
         break;
     }
   }
