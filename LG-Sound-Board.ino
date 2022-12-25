@@ -23,17 +23,23 @@ void setup() {
   irInit();
 }
 
-PGM_P soundFileFromIrCode(uint16_t irCode) {
+const char *soundFileFromKey(unsigned int bank, unsigned int key) {
+  static char fileName[10];
+  snprintf(fileName, sizeof fileName, "%02d-%02d.wav", bank, key);
+  return fileName;
+}
+
+const char *soundFileFromIrCode(uint16_t irCode) {
   switch (irCode) {
-    case 0x0140 : return sound_files[1];
-    case 0x0158 : return sound_files[2];
-    case 0x01A0 : return sound_files[3];
-    case 0x0160 : return sound_files[4];
-    case 0x0120 : return sound_files[5];
-    case 0x0118 : return sound_files[6];
-    case 0x01D2 : return sound_files[7];
-    case 0x0152 : return sound_files[8];
-    default     : return sound_files[16];
+    case 0x0140 : return soundFileFromKey(0, 1);
+    case 0x0158 : return soundFileFromKey(0, 2);
+    case 0x01A0 : return soundFileFromKey(0, 3);
+    case 0x0160 : return soundFileFromKey(0, 4);
+    case 0x0120 : return soundFileFromKey(0, 5);
+    case 0x0118 : return soundFileFromKey(0, 6);
+    case 0x01D2 : return soundFileFromKey(0, 7);
+    case 0x0152 : return soundFileFromKey(0, 8);
+    default     : return soundFileFromKey(0, 16);
   }
 }
 
@@ -72,13 +78,7 @@ void loop() {
     set_led(active_key);
     active_led = active_key;
 
-    if (sound_bank_counter < 2) {
-      audio.play(readString(sound_files[sound_bank_counter * GRID_SIZE * GRID_SIZE + active_key]));
-    } else {
-      char numberedFileName[] = "00-00.wav";
-      snprintf(numberedFileName, sizeof numberedFileName, "%02d-%02d.wav", sound_bank_counter, active_key);
-      audio.play(numberedFileName);
-    }
+    audio.play(soundFileFromKey(sound_bank_counter, active_key));
 
     previous_key = active_key;
   }
@@ -92,6 +92,6 @@ void loop() {
   // Debug infrared events
   const IrCode_t irCode = irDecoder();
   if (irCode.data) {
-    audio.play(readString(soundFileFromIrCode(irCode.data)));
+    audio.play(soundFileFromIrCode(irCode.data));
   }
 }
