@@ -1,7 +1,13 @@
+#include "Arduino.h"
 #include "LG-ledBtnGrid.h"
 #include <SimpleKeypad.h>
 
+#define ROW_MASK (0x0fU)
+#define COL_MASK (0xf0U)
+
+// Matrix rows: Port C bits 0-3
 static const uint8_t ROW_PIN[GRID_SIZE] = {A0, A1, A2, A3};
+// Matrix columns: Port D bits 4-7
 static const uint8_t COL_PIN[GRID_SIZE] = { 4, 5, 6, 7 };
 static const char key_chars[GRID_SIZE][GRID_SIZE] = {
   { 1, 2, 3, 4 },
@@ -14,11 +20,22 @@ static bool pixels[GRID_SIZE][GRID_SIZE];
 SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 
 void setup_grid(uint8_t rowMode) {
-  for (size_t i = 0; i < GRID_SIZE; i++) {
-    pinMode(ROW_PIN[i], rowMode);
-    digitalWrite(COL_PIN[i], HIGH);
-    pinMode(COL_PIN[i], INPUT);
+  uint8_t oldSREG = SREG; // Save interrupt state
+  cli();                  // Disable interrupts
+
+  DDRC &= ~ROW_MASK;      // Rows input
+  if (rowMode == INPUT) {
+		PORTC &= ~ROW_MASK;   // Rows tri-stated
+  } else {
+    PORTC |= ROW_MASK;    // Rows pullup
   }
+  PORTD |=  COL_MASK;     // Columns high/pullup
+  DDRD  &= ~COL_MASK;     // Columns input
+  PORTD &= ~COL_MASK;     // Columns tri-state
+
+  SREG = oldSREG;         // Restore interrupt state
+
+  return;
 }
 
 /*
@@ -46,18 +63,26 @@ void leds_refresh() {
   // Disable all leds
   setup_grid(INPUT);
 
+  uint8_t oldSREG = SREG; // Save interrupt state
+  cli();                  // Disable interrupts
+
   // Write pixels to columns
   for (size_t col = 0; col < GRID_SIZE; col++) {
     if (pixels[col][row])
     {
-      digitalWrite(COL_PIN[col], HIGH);
-      pinMode(COL_PIN[col], OUTPUT);
+      uint8_t bit = 0x10U << col;
+      PORTD |= bit; // High
+      DDRD  |= bit; // Output
     }
   }
 
   // Activate row
-  pinMode(ROW_PIN[row], OUTPUT);
-  digitalWrite(ROW_PIN[row], LOW);
+  uint8_t bit = 0x01U << row;
+  DDRC  |=  bit; // Output
+  PORTC &= ~bit; // Low
+
+  // Restore interrupt state
+  SREG = oldSREG;
 
   // Prepare the next row number
   const int timeNow = millis();
