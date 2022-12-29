@@ -30,6 +30,7 @@ uint8_t get_key() {
   return keypad.getKey();
 }
 
+// toggle led
 void set_led(uint8_t led) {
   led--;
   uint8_t x = led % GRID_SIZE;
@@ -37,6 +38,21 @@ void set_led(uint8_t led) {
 
   // Toggle pixel
   pixels[x][y] = !pixels[x][y];
+}
+
+// set led
+void set_led(uint8_t led, uint8_t status)
+{
+  led--;
+  uint8_t x = led % GRID_SIZE;
+  uint8_t y = led / GRID_SIZE;
+
+  pixels[x][y] = status;
+  // if(status==0){
+  //   pixels[x][y] = 1;
+  // } else if(status==1){
+  //   pixels[x][y] = 0;
+  // }
 }
 
 void leds_refresh() {

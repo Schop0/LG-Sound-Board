@@ -7,4 +7,5 @@
 // void setup_grid(uint8_t rowMode);
 uint8_t get_key();
 void set_led(uint8_t led);
+void set_led(uint8_t led, uint8_t status);
 void leds_refresh();
