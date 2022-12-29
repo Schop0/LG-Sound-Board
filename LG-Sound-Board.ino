@@ -6,6 +6,8 @@
 #include "LG-ledBtnGrid.h"
 #include "LG-infrared.h"
 
+static unsigned int time = 0;
+
 void setup() {
   // Enable amplifier IC
   pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
@@ -23,9 +25,34 @@ void setup() {
   irInit();
 
   initSoundBankCount();
+
+  pinMode(PIN_A4, OUTPUT);
+
+  time = millis();
+
+  Serial.begin(115200);
+}
+
+void runLasergame()
+{
+  digitalWrite(PIN_A4, !digitalRead(PIN_A4));
+  if(digitalRead(PIN_A4))
+  {
+    irLedOn();
+    digitalWrite(LED_BUILTIN, HIGH);
+  } else {
+    irLedOff();
+    digitalWrite(LED_BUILTIN, LOW);
+  }
 }
 
 void loop() {
+  if ((time + 1000) <= millis())
+  {
+    runLasergame();
+    time = millis();
+  }
+
   static uint8_t active_led = LED_NONE;
   static uint8_t previous_key = LED_NONE;
   static uint8_t sound_bank_counter = 0;

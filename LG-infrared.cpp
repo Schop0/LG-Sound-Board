@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "LG-infrared.h"
 #include <cppQueue.h>
 
