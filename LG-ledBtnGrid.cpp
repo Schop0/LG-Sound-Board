@@ -2,6 +2,8 @@
 #include "LG-ledBtnGrid.h"
 #include <SimpleKeypad.h>
 
+#define KEY_DEBOUNCE_MS (10U)
+
 #define ROW_MASK (0x0fU)
 #define COL_MASK (0xf0U)
 
@@ -16,6 +18,7 @@ static const char key_chars[GRID_SIZE][GRID_SIZE] = {
   { 13, 14, 15, 16 }
 };
 
+static bool keyScanTrigger = true;
 static bool pixels[GRID_SIZE][GRID_SIZE];
 SimpleKeypad keypad((char *)key_chars, ROW_PIN, COL_PIN, GRID_SIZE, GRID_SIZE);
 
@@ -43,8 +46,24 @@ void setup_grid(uint8_t rowMode) {
  * Return the number of a single pressed key or KEY_NONE
  */
 uint8_t get_key() {
+  if (!keyScanTrigger) {
+    return KEY_NONE;
+  }
+  keyScanTrigger = false;
+
   setup_grid(INPUT_PULLUP);
-  return keypad.getKey();
+  uint8_t key = keypad.scan();
+
+  static bool hold = false;
+  if (key && !hold) {
+    hold = true;
+    return key;
+  } else
+  if (!key) {
+    hold = false;
+  }
+
+  return KEY_NONE;
 }
 
 void set_led(uint8_t led) {
@@ -89,5 +108,10 @@ void leds_refresh() {
   if (timeNow > lastRefresh) {
     lastRefresh = timeNow;
     ++row %= GRID_SIZE;
+
+    // Synchronise keypad scanning with led changeover
+    if ((timeNow % KEY_DEBOUNCE_MS) == 0) {
+      keyScanTrigger = true;
+    }
   }
 }
