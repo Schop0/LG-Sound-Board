@@ -31,6 +31,8 @@ void loop() {
   static uint8_t sound_bank_counter = 0;
 
   uint8_t active_key = get_key();
+  // Relight leds ASAP after reading key pad
+  leds_refresh();
 
   if (active_key == KEY_NONE) {
     // Geen key, doe huidige led uit als klaar met audio
@@ -67,9 +69,6 @@ void loop() {
 
   // Amplifier shutdown control
   digitalWrite(AMP_SHUTDOWN_PIN, !audio.isPlaying());
-
-  // Keep the led on for a while to be visible
-  leds_refresh();
 
   // Debug infrared events
   const IrCode_t irCode = irDecoder();

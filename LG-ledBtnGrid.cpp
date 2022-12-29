@@ -41,6 +41,7 @@ void set_led(uint8_t led) {
 
 void leds_refresh() {
   static size_t row = 0;
+  static int lastRefresh = 0;
 
   // Disable all leds
   setup_grid(INPUT);
@@ -54,12 +55,14 @@ void leds_refresh() {
     }
   }
 
-  // Activate row for a short time, blocking
+  // Activate row
   pinMode(ROW_PIN[row], OUTPUT);
   digitalWrite(ROW_PIN[row], LOW);
-  delay(1);
-  pinMode(ROW_PIN[row], INPUT);
 
   // Prepare the next row number
-  ++row %= GRID_SIZE;
+  const int timeNow = millis();
+  if (timeNow > lastRefresh) {
+    lastRefresh = timeNow;
+    ++row %= GRID_SIZE;
+  }
 }
