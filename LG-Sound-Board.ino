@@ -23,8 +23,6 @@ void setup() {
   irInit();
 
   initSoundBankCount();
-
-  Serial.begin(115200);
 }
 
 void loop() {

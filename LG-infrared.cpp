@@ -1,4 +1,3 @@
-#include "Arduino.h"
 #include "LG-infrared.h"
 #include <cppQueue.h>
 
@@ -82,57 +81,9 @@ void irInitTransmitter() {
   OCR2B = OCR2A / 2;
 }
 
-// Check timer interrupt interval
-unsigned long t=0, t0=0, t1=0;
-
-// Timer0 compare match A interrupt handler
-ISR(TIMER0_COMPA) {
-  t1 = micros();
-  t = t1 - t0;
-}
-
-// Initialise timer 0 to generate protocol timing interrupts
-void irInitProtocolNEC() {
-  // Disable power saving
-  bitClear(PRR, PRTIM0);
-  bitClear(PRR, PRTIM2);
-  // Reset control registers
-  TCCR0A = 0;
-  TCCR0B = 0;
-  // Clock Select
-  // clk/1024 (from prescaler)
-  bitSet(TCCR0B, CS00);
-  bitSet(TCCR0B, CS02);
-  // Reset match registers
-  OCR0A = 0;
-  OCR0B = 0;
-  // Reset counter register
-  TCNT0 = 0;
-  t0 = micros();
-  // Clear pending interrupts
-  bitSet(TIFR0, OCF0A);
-  // Enable match interrupts
-  bitSet(TIMSK0, OCIE0A);
-
-  // Test interrupting at match value 157 (10.048ms)
-  TCCR0A = 157;
-  // Wait for interrupt to have fired
-  while (!t);
-  // Print result
-  Serial.print("t0: ");
-  Serial.print(t0);
-  Serial.print("us t1: ");
-  Serial.print(t1);
-  Serial.print("us t delta: ");
-  Serial.print(t);
-  Serial.print("us");
-  Serial.println();
-}
-
 void irInit() {
   irInitReceiver();
   irInitTransmitter();
-  irInitProtocolNEC();
 }
 
 /*
