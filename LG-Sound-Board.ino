@@ -46,12 +46,43 @@ void runLasergame()
   }
 }
 
-void loop() {
+void fire() {
+  unsigned char personID = 0b10100010;
+  int bitnr = 0;
+
+  while (bitnr < 8)
+  {
+    if (personID & 0x01)
+    {
+      // 1
+      sendBit(1);
+    }
+    else
+    {
+      // 0
+      sendBit(0);
+    }
+
+    bitnr++;
+    personID >>= 1;
+  }
+}
+
+void sendBit(uint8_t bit){
   if ((time + 1000) <= millis())
   {
-    runLasergame();
+    if (bit==0) {
+      digitalWrite(PIN_A4, LOW);
+    } else {
+      digitalWrite(PIN_A4, HIGH);
+    }
+    
     time = millis();
   }
+}
+
+void loop() {
+
 
   static uint8_t active_led = LED_NONE;
   static uint8_t previous_key = LED_NONE;
@@ -67,6 +98,8 @@ void loop() {
         active_led = LED_NONE;
       }
     }
+  } else if (active_key == 2) {
+    fire();
   } else if (active_key == 1) {
     // switch mode
     // press first button for changing sound bank
