@@ -6,8 +6,6 @@
 #include "LG-ledBtnGrid.h"
 #include "LG-infrared.h"
 
-static unsigned int time = 0;
-
 void setup() {
   // Enable amplifier IC
   pinMode(AMP_SHUTDOWN_PIN, OUTPUT);
@@ -27,56 +25,6 @@ void setup() {
   initSoundBankCount();
 
   pinMode(PIN_A4, OUTPUT);
-
-  time = millis();
-
-  Serial.begin(115200);
-}
-
-unsigned int irPlayerCode = 0;
-int irBitCount = 0;
-bool irBusy = false;
-
-void runLasergame()
-{
-  int bitTime_ms = 10;
-  if ((time + bitTime_ms) <= millis())
-  {
-    time += bitTime_ms;
-
-    if (irBitCount+1) {
-      if(irPlayerCode & (1 << irBitCount)) {
-        irLedOn();
-        digitalWrite(PIN_A4, HIGH); // Debug
-      } else {
-        irLedOff();
-        digitalWrite(PIN_A4, LOW); // Debug
-      }
-      irBitCount--;
-    } else {
-        irLedOff();
-        digitalWrite(PIN_A4, LOW); // Debug
-    }
-  }
-}
-
-bool fireLaser(unsigned int playerNumber) {
-  // LG-protocol: 8-bit codes starting with 0b1010 and a 4-bit plyer number
-  // Skip player numbers that may be misinterpreted ad the start bits
-  static const char player[] = {0x00, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, /*skip*/ 0xA6, 0xA7, 0xA8, 0xA9, /*skip*/ 0xAB, 0xAC, /*skip*/ 0xAE, 0xAF};
-  static const unsigned int playerCount = sizeof(player) / sizeof(player[0]);
-  static const unsigned int playerCodeLength_bits = 8;
-
-  if (playerNumber >= playerCount) {
-    return false;
-  } else
-  if (irBusy) {
-    return false;
-  } else {
-    irPlayerCode = player[playerNumber];
-    irBitCount = playerCodeLength_bits;
-    return true;
-  }
 }
 
 void loop() {

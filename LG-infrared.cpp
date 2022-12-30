@@ -9,6 +9,11 @@ typedef struct {
 
 irEvent_t irEventQueueData[IR_QUEUE_SIZE];
 
+static unsigned int irPlayerCode = 0;
+static int irBitCount = 0;
+static bool laserIsFiring = false;
+static unsigned int nextBitTime = 0;
+
 cppQueue irEventQueue(
   sizeof(irEvent_t), // Size of record
   IR_QUEUE_SIZE, // Number of records
@@ -172,4 +177,53 @@ IrCode_t irDecoder() {
   }
 
   return returnData;
+}
+
+bool fireLaser(unsigned int playerNumber) {
+  // LG-protocol: 8-bit codes starting with 0b1010 and a 4-bit plyer number
+  // Skip player numbers that may be misinterpreted ad the start bits
+  static const char player[] = {0x00, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, /*skip*/ 0xA6, 0xA7, 0xA8, 0xA9, /*skip*/ 0xAB, 0xAC, /*skip*/ 0xAE, 0xAF};
+  static const unsigned int playerCount = sizeof(player) / sizeof(player[0]);
+  static const unsigned int playerCodeLength_bits = 8;
+
+  if (playerNumber >= playerCount) {
+    return false;
+  } else
+  if (laserIsFiring) {
+    return false;
+  } else {
+    irPlayerCode = player[playerNumber];
+    irBitCount = playerCodeLength_bits;
+    laserIsFiring = true;
+    nextBitTime = millis();
+    return true;
+  }
+}
+
+void runLasergame()
+{
+  int bitTime_ms = 10;
+  if (nextBitTime <= millis())
+  {
+    nextBitTime += bitTime_ms;
+
+    if (laserIsFiring) {
+      // Transmit the next bit
+      if ( bitRead(irPlayerCode, --irBitCount) ) {
+        irLedOn();
+        digitalWrite(PIN_A4, HIGH); // Debug
+      } else {
+        irLedOff();
+        digitalWrite(PIN_A4, LOW); // Debug
+      }
+
+      // No more bits left
+      if(irBitCount == 0) {
+        laserIsFiring = false;
+      }
+    } else {
+        irLedOff();
+        digitalWrite(PIN_A4, LOW); // Debug
+    }
+  }
 }

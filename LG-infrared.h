@@ -17,3 +17,6 @@ static inline void irLedOn()  { bitSet  (DDRD, DDD3); }
 static inline void irLedOff() { bitClear(DDRD, DDD3); }
 static inline void irLedSet(bool state) { state ? irLedOn() : irLedOff(); }
 static inline bool irLedState() { return bitRead(DDRD, DDD3); }
+
+bool fireLaser(unsigned int playerNumber);
+void runLasergame();
