@@ -10,6 +10,7 @@
       to C:\Users\<user>\Documents\Arduino\libraries\TMRpcm\pcmConfig.h (overwrite it or make a backup by renaming the existing file to e.g. pcmConfig.h.orig)
    3. cppQueue.h: Queue by SMFSW v1.11.0 (do not confuse with cQueue by SMFSW)
    4. SimpleKeypad.h: SimpleKeypad by Maxime Bohrer v1.0.0
+   5. ArduinoUniqueID.h: ArduinoUniqueID v1.3.0
 5. Connect Arduino with USB cable to PC. It is not necessary to unplug Arduino from the SoundBoard, so leave it in for convenience.
 6. In Arduino IDE, in dropdown box on top select COM1 (or COM<number> with another number), type "Nano" in the box and select "Arduino Nano" and press OK.
 7. In Arduino IDE, press the arrow button on top to upload the sketch to the Arduino. This should report that it is successful.
