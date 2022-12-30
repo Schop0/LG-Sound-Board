@@ -2,6 +2,7 @@
 #define SPEAKER_PIN 9
 #define AMP_SHUTDOWN_PIN 8
 
+#include <ArduinoUniqueID.h>
 #include "LG-Audio.h"
 #include "LG-ledBtnGrid.h"
 #include "LG-infrared.h"
@@ -20,7 +21,10 @@ void setup() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  irInit();
+  int uniqueIdLow = UniqueID[UniqueIDsize - 1];
+  int uniqueIdHigh = UniqueID[UniqueIDsize - 2];
+  int uniqueId = (uniqueIdHigh << 8) | uniqueIdLow;
+  irInit(uniqueId);
 
   initSoundBankCount();
 

@@ -87,7 +87,7 @@ void irInitTransmitter() {
   OCR2B = OCR2A / 2;
 }
 
-void irInit() {
+void irInit(uint16_t playerId) {
   irInitReceiver();
   irInitTransmitter();
 }
