@@ -3,8 +3,8 @@
 #include <cppQueue.h>
 
 typedef struct {
-  uint16_t microsLow;
-  uint16_t microsHigh;
+  bool pinState;
+  unsigned long timeStamp_micros;
 } irEvent_t;
 
 irEvent_t irEventQueueData[IR_QUEUE_SIZE];
@@ -25,31 +25,12 @@ cppQueue irEventQueue(
 
 ISR(ANALOG_COMP_vect)
 {
-  static unsigned long timeLast = 0;
-  static irEvent_t event = { 0 };
+  const irEvent_t event = {
+    .pinState         = bitRead(ACSR, ACO),
+    .timeStamp_micros = micros()
+  };
 
-  const unsigned long timeNow = micros();
-  unsigned long timeDelta = timeNow - timeLast;
-  timeLast = timeNow;
-
-  // Timeout on overflow
-  if (timeDelta > UINT16_MAX)
-  {
-    timeDelta = 0;
-  }
-
-  // Capture low and high timings, then fire an event
-  switch (bitRead(ACSR, ACO)) {
-    case HIGH:
-      event.microsLow = timeDelta;
-      break;
-    case LOW:
-      event.microsHigh = timeDelta;
-      irEventQueue.push(&event);
-      event.microsHigh = 0;
-      event.microsLow = 0;
-      break;
-  }
+  irEventQueue.push(&event);
 }
 
 void irInitReceiver()
@@ -98,11 +79,10 @@ void irInit(uint16_t playerId) {
 IrCode_t decodeNEC(uint32_t rawData) {
   // The NEC protocol consists of 8-bit address and 8-bit data.
   // Each followed by their logical inverse for a total of 4 bytes.
-  uint8_t *rawBytes = (uint8_t *) &rawData;
-  const uint8_t  address = rawBytes[3];
-  const uint8_t iaddress = rawBytes[2];
-  const uint8_t  command = rawBytes[1];
-  const uint8_t icommand = rawBytes[0];
+  const uint8_t  address = (rawData >>  0) & 0xff;
+  const uint8_t iaddress = (rawData >>  8) & 0xff;
+  const uint8_t  command = (rawData >> 16) & 0xff;
+  const uint8_t icommand = (rawData >> 24) & 0xff;
 
   IrCode_t decoded = {0};
 
@@ -125,15 +105,11 @@ IrCode_t decodeNEC(uint32_t rawData) {
 IrCode_t irDecoder() {
   static uint32_t irData = 0;
   static unsigned int irBit = 0;
+  static unsigned long timePrevious_micros = 0;
 
+  unsigned long timeDelta_micros = 0;
   IrCode_t returnData = {0};
   irEvent_t irEvent;
-  enum {
-    SHORT = 0,
-    LONG = 1,
-    START = 2,
-    END = 3,
-  } irState;
 
   while (!irEventQueue.isEmpty()) {
     // Temporarily disable interrupts for an atomic queue operation
@@ -143,36 +119,31 @@ IrCode_t irDecoder() {
     interrupts();
 
     // Protocol specific decoding with magic numbers for timing
-    if (irEvent.microsLow == 0) {
-      irState = START;
-    } else if (irEvent.microsHigh > 1000) {
-      irState = END;
-    } else if (irEvent.microsLow > 2000) {
-      irState = START;
-    } else {
-      irState = (irEvent.microsLow < 1000)
-              ? SHORT
-              : LONG;
-    }
+    timeDelta_micros    = irEvent.timeStamp_micros - timePrevious_micros;
+    timePrevious_micros = irEvent.timeStamp_micros;
 
-    switch (irState) {
-      case START :
+    // Decode based on time between pulses
+    if (irEvent.pinState == 1) {
+      if (timeDelta_micros > 2000) {
+        // Start bit: 4500us
         irData = 0;
-        break;
-      case SHORT :
+        irBit  = 0;
+      } else {
+        // Data bit
+        if (timeDelta_micros > 1000) {
+          // Logic one: 1687.5us
+          bitSet(irData, irBit);
+        } else {
+          // Logic zero: 562.5us
+          bitClear(irData, irBit);
+        }
         irBit++;
-        // Shift in a zero
-        irData <<= 1;
-        break;
-      case LONG :
-        irBit++;
-        // Shift in a one
-        irData <<= 1;
-        irData |= 1;
-        break;
-      case END :
+      }
+      // Assume data ends after 32 bits
+      if (irBit >= 32) {
         returnData = decodeNEC(irData);
-        break;
+        irBit  = 0;
+      }
     }
   }
 
