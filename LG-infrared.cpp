@@ -113,10 +113,18 @@ IrCode_t decodeNEC(uint32_t rawData) {
 uint32_t encodeNEC(IrCode_t decoded) {
   uint32_t rawData = 0;
 
-  rawData |=   decoded.address  <<  0;
-  rawData |= ~(decoded.address) <<  8;
-  rawData |=   decoded.command  << 16;
-  rawData |= ~(decoded.command) << 24;
+  // Generate normal and inverted bytes
+  const uint8_t  address =  decoded.address;
+  const uint8_t iaddress = ~decoded.address;
+  const uint8_t  command =  decoded.command;
+  const uint8_t icommand = ~decoded.command;
+
+  // Zero-extend to 32-bits and shift into place
+  rawData =
+    ((uint32_t)icommand << 24) |
+    ((uint32_t) command << 16) |
+    ((uint32_t)iaddress <<  8) |
+    ((uint32_t) address <<  0);
 
   return rawData;
 }
