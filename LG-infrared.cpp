@@ -184,22 +184,18 @@ IrCode_t irDecoder() {
   return returnData;
 }
 
-bool fireLaser(unsigned int playerNumber) {
-  // LG-protocol: 8-bit codes starting with 0b1010 and a 4-bit plyer number
-  // Skip player numbers that may be misinterpreted ad the start bits
-  static const char player[] = {0x00, 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, /*skip*/ 0xA6, 0xA7, 0xA8, 0xA9, /*skip*/ 0xAB, 0xAC, /*skip*/ 0xAE, 0xAF};
-  static const unsigned int playerCount = sizeof(player) / sizeof(player[0]);
-
-  if (playerNumber >= playerCount) {
-    return false;
-  } else
+bool fireLaser(uint8_t playerNumber) {
   if (laserMessage.txState != IDLE) {
     return false;
   } else {
-    laserMessage.data     = encodeNEC({player[playerNumber]});
+    IrCode_t playerIrCode = {0};
+    playerIrCode.address = playerNumber;
+
+    laserMessage.data     = encodeNEC(playerIrCode);
     laserMessage.bitCount = 8 * sizeof(laserMessage.data);
     laserMessage.txState  = START_MARK;
     irLedOff();
+
     return true;
   }
 }
