@@ -196,7 +196,7 @@ bool fireLaser(unsigned int playerNumber) {
   }
 }
 
-void runLasergame()
+bool runLasergame()
 {
   static unsigned long nextEventTime = 0;
   static size_t bitNumber = 0;
@@ -205,7 +205,7 @@ void runLasergame()
 
   // Return immediately until next event is due
   if (nextEventTime > currentTime) {
-    return;
+    return true;
   }
 
   unsigned long eventDuration = 0;
@@ -229,4 +229,6 @@ void runLasergame()
 
   // Debug IR led on IO pin
   digitalWrite(PIN_A4, irLedState());
+
+  return nextEventTime > currentTime;
 }

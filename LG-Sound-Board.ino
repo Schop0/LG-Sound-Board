@@ -66,12 +66,16 @@ void loop() {
     set_led(active_key);
     active_led = active_key;
 
+    // Use key number as lasergame player number
+    fireLaser(active_key);
+
+    // Finish firing laser without audio to prevent timing issues
+    audio.stopPlayback();
+    while (runLasergame()) {;}
+
     audio.play(soundFileFromKey(sound_bank_counter, active_key));
 
     previous_key = active_key;
-
-    // Use key number as lasergame player number
-    fireLaser(active_key);
   }
 
   // Run the lasergame background process to handle transmitting
