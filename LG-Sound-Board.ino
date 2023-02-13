@@ -2,6 +2,7 @@
 #define SPEAKER_PIN 9
 #define AMP_SHUTDOWN_PIN 8
 
+#include <ArduinoUniqueID.h>
 #include "LG-Audio.h"
 #include "LG-ledBtnGrid.h"
 #include "LG-infrared.h"
@@ -20,9 +21,14 @@ void setup() {
     digitalWrite(LED_BUILTIN, HIGH);
   }
 
-  irInit();
+  int uniqueIdLow = UniqueID[UniqueIDsize - 1];
+  int uniqueIdHigh = UniqueID[UniqueIDsize - 2];
+  int uniqueId = (uniqueIdHigh << 8) | uniqueIdLow;
+  irInit(uniqueId);
 
   initSoundBankCount();
+
+  pinMode(PIN_A4, OUTPUT);
 }
 
 void loop() {
@@ -60,10 +66,20 @@ void loop() {
     set_led(active_key);
     active_led = active_key;
 
+    // Use key number as lasergame player number
+    fireLaser(active_key);
+
+    // Finish firing laser without audio to prevent timing issues
+    audio.stopPlayback();
+    while (runLasergame()) {;}
+
     audio.play(soundFileFromKey(sound_bank_counter, active_key));
 
     previous_key = active_key;
   }
+
+  // Run the lasergame background process to handle transmitting
+  runLasergame();
 
   // Amplifier shutdown control
   digitalWrite(AMP_SHUTDOWN_PIN, !audio.isPlaying());

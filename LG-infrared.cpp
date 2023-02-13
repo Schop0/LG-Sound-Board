@@ -1,12 +1,30 @@
+#include "Arduino.h"
 #include "LG-infrared.h"
 #include <cppQueue.h>
 
 typedef struct {
-  uint16_t microsLow;
-  uint16_t microsHigh;
+  bool pinState;
+  unsigned long timeStamp_micros;
 } irEvent_t;
 
 irEvent_t irEventQueueData[IR_QUEUE_SIZE];
+
+typedef enum {
+  IDLE,
+  START_MARK,
+  START_SPACE,
+  BIT_MARK,
+  BIT_SPACE,
+  STOP
+} necProtocolState_t;
+
+typedef struct {
+  uint32_t data;
+  size_t bitCount;
+  necProtocolState_t txState;
+} laserMessage_t;
+
+static laserMessage_t laserMessage = {0};
 
 cppQueue irEventQueue(
   sizeof(irEvent_t), // Size of record
@@ -19,31 +37,12 @@ cppQueue irEventQueue(
 
 ISR(ANALOG_COMP_vect)
 {
-  static unsigned long timeLast = 0;
-  static irEvent_t event = { 0 };
+  const irEvent_t event = {
+    .pinState         = bitRead(ACSR, ACO),
+    .timeStamp_micros = micros()
+  };
 
-  const unsigned long timeNow = micros();
-  unsigned long timeDelta = timeNow - timeLast;
-  timeLast = timeNow;
-
-  // Timeout on overflow
-  if (timeDelta > UINT16_MAX)
-  {
-    timeDelta = 0;
-  }
-
-  // Capture low and high timings, then fire an event
-  switch (bitRead(ACSR, ACO)) {
-    case HIGH:
-      event.microsLow = timeDelta;
-      break;
-    case LOW:
-      event.microsHigh = timeDelta;
-      irEventQueue.push(&event);
-      event.microsHigh = 0;
-      event.microsLow = 0;
-      break;
-  }
+  irEventQueue.push(&event);
 }
 
 void irInitReceiver()
@@ -81,7 +80,7 @@ void irInitTransmitter() {
   OCR2B = OCR2A / 2;
 }
 
-void irInit() {
+void irInit(uint16_t playerId) {
   irInitReceiver();
   irInitTransmitter();
 }
@@ -92,11 +91,10 @@ void irInit() {
 IrCode_t decodeNEC(uint32_t rawData) {
   // The NEC protocol consists of 8-bit address and 8-bit data.
   // Each followed by their logical inverse for a total of 4 bytes.
-  uint8_t *rawBytes = (uint8_t *) &rawData;
-  const uint8_t  address = rawBytes[3];
-  const uint8_t iaddress = rawBytes[2];
-  const uint8_t  command = rawBytes[1];
-  const uint8_t icommand = rawBytes[0];
+  const uint8_t  address = (rawData >>  0) & 0xff;
+  const uint8_t iaddress = (rawData >>  8) & 0xff;
+  const uint8_t  command = (rawData >> 16) & 0xff;
+  const uint8_t icommand = (rawData >> 24) & 0xff;
 
   IrCode_t decoded = {0};
 
@@ -110,6 +108,28 @@ IrCode_t decodeNEC(uint32_t rawData) {
 }
 
 /*
+ * Encode NEC-style data into raw bits ready to transmit
+ */
+uint32_t encodeNEC(IrCode_t decoded) {
+  uint32_t rawData = 0;
+
+  // Generate normal and inverted bytes
+  const uint8_t  address =  decoded.address;
+  const uint8_t iaddress = ~decoded.address;
+  const uint8_t  command =  decoded.command;
+  const uint8_t icommand = ~decoded.command;
+
+  // Zero-extend to 32-bits and shift into place
+  rawData =
+    ((uint32_t)icommand << 24) |
+    ((uint32_t) command << 16) |
+    ((uint32_t)iaddress <<  8) |
+    ((uint32_t) address <<  0);
+
+  return rawData;
+}
+
+/*
  * Infrared decoder pseudo-statemachine
  * Protocol is reverse engineered from an arbitrary protocol. In this case:
  * the remote control of the KEF LS50 Wireless speakers
@@ -119,15 +139,11 @@ IrCode_t decodeNEC(uint32_t rawData) {
 IrCode_t irDecoder() {
   static uint32_t irData = 0;
   static unsigned int irBit = 0;
+  static unsigned long timePrevious_micros = 0;
 
+  unsigned long timeDelta_micros = 0;
   IrCode_t returnData = {0};
   irEvent_t irEvent;
-  enum {
-    SHORT = 0,
-    LONG = 1,
-    START = 2,
-    END = 3,
-  } irState;
 
   while (!irEventQueue.isEmpty()) {
     // Temporarily disable interrupts for an atomic queue operation
@@ -137,38 +153,86 @@ IrCode_t irDecoder() {
     interrupts();
 
     // Protocol specific decoding with magic numbers for timing
-    if (irEvent.microsLow == 0) {
-      irState = START;
-    } else if (irEvent.microsHigh > 1000) {
-      irState = END;
-    } else if (irEvent.microsLow > 2000) {
-      irState = START;
-    } else {
-      irState = (irEvent.microsLow < 1000)
-              ? SHORT
-              : LONG;
-    }
+    timeDelta_micros    = irEvent.timeStamp_micros - timePrevious_micros;
+    timePrevious_micros = irEvent.timeStamp_micros;
 
-    switch (irState) {
-      case START :
+    // Decode based on time between pulses
+    if (irEvent.pinState == 1) {
+      if (timeDelta_micros > 2000) {
+        // Start bit: 4500us
         irData = 0;
-        break;
-      case SHORT :
+        irBit  = 0;
+      } else {
+        // Data bit
+        if (timeDelta_micros > 1000) {
+          // Logic one: 1687.5us
+          bitSet(irData, irBit);
+        } else {
+          // Logic zero: 562.5us
+          bitClear(irData, irBit);
+        }
         irBit++;
-        // Shift in a zero
-        irData <<= 1;
-        break;
-      case LONG :
-        irBit++;
-        // Shift in a one
-        irData <<= 1;
-        irData |= 1;
-        break;
-      case END :
+      }
+      // Assume data ends after 32 bits
+      if (irBit >= 32) {
         returnData = decodeNEC(irData);
-        break;
+        irBit  = 0;
+      }
     }
   }
 
   return returnData;
+}
+
+bool fireLaser(uint8_t playerNumber) {
+  if (laserMessage.txState != IDLE) {
+    return false;
+  } else {
+    IrCode_t playerIrCode = {0};
+    playerIrCode.address = playerNumber;
+
+    laserMessage.data     = encodeNEC(playerIrCode);
+    laserMessage.bitCount = 8 * sizeof(laserMessage.data);
+    laserMessage.txState  = START_MARK;
+    irLedOff();
+
+    return true;
+  }
+}
+
+bool runLasergame()
+{
+  static unsigned long nextEventTime = 0;
+  static size_t bitNumber = 0;
+
+  const unsigned long currentTime = micros();
+
+  // Return immediately until next event is due
+  if (nextEventTime > currentTime) {
+    return true;
+  }
+
+  unsigned long eventDuration = 0;
+
+  switch (laserMessage.txState) {
+    case START_MARK  : irLedOn (); eventDuration = 9000; laserMessage.txState = START_SPACE ; bitNumber = 0; break;
+    case START_SPACE : irLedOff(); eventDuration = 4500; laserMessage.txState = BIT_MARK    ; break;
+    case BIT_MARK    : irLedOn (); eventDuration =  562; laserMessage.txState = BIT_SPACE   ; break;
+    case BIT_SPACE   : irLedOff(); eventDuration = bitRead(laserMessage.data, bitNumber++)
+        ? 1687 // Logic one
+        : 562; // Logic zero
+      laserMessage.txState = (bitNumber < laserMessage.bitCount)
+        ? BIT_MARK
+        : STOP;
+      break;
+    case STOP        : irLedOn (); eventDuration =  562; laserMessage.txState = IDLE        ; break;
+    default          : irLedOff(); eventDuration =    0; laserMessage.txState = IDLE        ; break;
+  }
+
+  nextEventTime = currentTime + eventDuration;
+
+  // Debug IR led on IO pin
+  digitalWrite(PIN_A4, irLedState());
+
+  return nextEventTime > currentTime;
 }
