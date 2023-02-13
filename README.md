@@ -34,7 +34,7 @@
 - [x] Receive IR signal
 - [ ] Decode IR signal
 - [x] Map decoded IR signal to person/sound
-- [ ] Send modulated IR signal
+- [X] Send modulated IR signal
 - [x] Set one button for selecting sound bank
 - [x] Make two (or more) sound banks available for TMRpcm
 
